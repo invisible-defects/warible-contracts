@@ -46,6 +46,8 @@ contract Lootbox is Ownable, Pausable, ReentrancyGuard {
   struct OptionSettings {
     // Probability in basis points (out of 10,000) of receiving each class (descending)
     uint16[NUM_CLASSES] classProbabilities;
+    // Lootbox opening price
+    uint256 price;
   }
 
   mapping (uint256 => OptionSettings) optionToSettings;
@@ -66,9 +68,9 @@ contract Lootbox is Ownable, Pausable, ReentrancyGuard {
   ) {
     // Example settings and probabilities
     // you can also call these after deploying
-    setOptionSettings(Option.Basic, [7300, 2100, 400, 200]);
-    setOptionSettings(Option.Gold, [7000, 2300, 400, 300]);
-    setOptionSettings(Option.Magic, [6800, 2400, 400, 400]);
+    setOptionSettings(Option.Basic, [7300, 2100, 400, 200], 1000);
+    setOptionSettings(Option.Gold, [7000, 2300, 400, 300], 2000);
+    setOptionSettings(Option.Magic, [6800, 2400, 400, 400], 3000);
 
     nftAddress = _nftAddress;
   }
@@ -136,10 +138,12 @@ contract Lootbox is Ownable, Pausable, ReentrancyGuard {
    */
   function setOptionSettings(
     Option _option,
-    uint16[NUM_CLASSES] memory _classProbabilities
+    uint16[NUM_CLASSES] memory _classProbabilities,
+    uint256 _price
   ) public onlyOwner {
     OptionSettings memory settings = OptionSettings({
-        classProbabilities: _classProbabilities
+        classProbabilities: _classProbabilities,
+        price: _price
     });
 
     optionToSettings[uint256(_option)] = settings;
@@ -162,12 +166,26 @@ contract Lootbox is Ownable, Pausable, ReentrancyGuard {
    * @dev Open a lootbox manually and send what's inside to _toAddress
    * Convenience method for contract owner.
    */
-  function open(
+  function openManual(
     uint256 _optionId,
     address _toAddress,
     uint256 _amount
   ) external onlyOwner {
     _mint(Option(_optionId), _toAddress, _amount, "");
+  }
+
+  /**
+   * @dev Open a lootbox!
+   */
+  function open(
+    uint256 _optionId,
+    uint256 _amount
+  ) external payable {
+    require(
+        optionToSettings[_optionId].price * _amount == msg.value,
+        "Lootbox#__open: WRONG_MESSAGE_VALUE"
+    );
+    _mint(Option(_optionId), msg.sender, _amount, "");
   }
 
   /**
