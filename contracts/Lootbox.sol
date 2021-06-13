@@ -23,7 +23,8 @@ contract Lootbox is Ownable, Pausable, ReentrancyGuard {
 
   // Address of the ERC1155 NFT being used
   address nftAddress;
-  string constant internal baseMetadataURI = "https://opensea-creatures-api.herokuapp.com/api/";
+  // TODO: add meta url
+  string constant internal baseMetadataURI = "https://example.com/";
 
   // Drops rarity classes
   enum Class {
@@ -241,9 +242,10 @@ contract Lootbox is Ownable, Pausable, ReentrancyGuard {
     IERC1155LazyMint nftContract = IERC1155LazyMint(nftAddress);
 
     uint256 tokenId = _pickRandomAvailableTokenIdForClass(_class, _amount);
+    // TODO: support unminted tokens, pre-created droptables with token meta
     require(
         tokenId != 0,
-        "Lootbox#__sendTokenWithClass: NO_TOKEN_IDS_AVAILABLE"
+        "Lootbox#__sendTokenWithClass: UNMINTED_TOKENS_NOT_SUPPORTED"
     );
 
     if (classIsPreminted[classId]) {
